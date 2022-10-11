@@ -1,0 +1,301 @@
+---
+title: "Shooting Data between 2006 and 2021 in New York City and its Boroughs"
+date: "2022-08-10"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Analysis of Shootings in New York City from 2006 to 2021
+
+This analysis was performed using shooting data recorded by the New York Police Department (NYPD) starting Jan. 1st, 2006 and ending Dec
+31st, 2021). The data was attained from: [NYPD Shooting Incident Data (Historic)](https://catalog.data.gov/dataset/nypd-shooting-incident-data-historic) .https://catalog.data.gov/dataset/nypd-shooting-incident-data-historic  
+
+The data was obtained and analyzed for total shootings from 2006 up to the previous calendar year (2021) in New York City and each of its corresponding boroughs (Manhattan, Bronx, Queens, Staten Island, and Brooklyn).
+
+
+#### Analysis of Total Shootings throughout New York City and its Boroughs
+
+First the data was examined for total shootings for the entire city and for each of the individual Boroughs within the city. 
+In total New York City had 
+```{r, include=FALSE}
+myurl<-"https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD"
+library(tidyverse)
+
+shooting_data<-read.csv(myurl)
+length(shooting_data$OCCUR_DATE)
+```
+
+The shooting totals for each of the Boroughs between January 1st, 2006 and December 31st, 2021 were to found to be as follows:
+```{r, include=FALSE}
+table(shooting_data$BORO)
+```
+
+
+* This indicates that:
+  + 28.9% of the shootings occurred in the Bronx.
+  + 40.5% of the shootings occurred in the Brooklyn.
+  + 12.8% of the shootings occurred Manhattan.
+  + 15.0% of the shootings occurred in Queens.
+  + 2.9% of the shootings occurred in Staten Island.
+
+The majority of the shootings identified by the NYPD were located in Brooklyn between 2006 and 2021.
+
+
+#### Analysis of Shootings Over Time in New York City and its Boroughs
+
+To perform analysis of shootings over the 15 year time, the sums of shooting incidents in each month between 2006 and 2021 were found. This data was then plotted in the form of data points for New York city in its entirety as well as for each of its corresponding Boroughs. 
+
+The Data was then modeled with a best fit regression line (indicated by a solid black line). The model also includes a shaded area to show where the 95% confidence interval for the data would be. As such, the shaded area indicates where it would be expected to find 95% of the data points if the data were to follow the regression line which indicates the mean number of shootings over time.
+
+```{r, echo=FALSE}
+shooting_data<- shooting_data %>% select(-c(X_COORD_CD,Y_COORD_CD,Latitude,Longitude,Lon_Lat,INCIDENT_KEY))
+
+library(lubridate)
+newshooting_data<- shooting_data %>% mutate(OCCUR_DATE=mdy(OCCUR_DATE)) 
+
+newestshooting_data_NYC<-newshooting_data %>% mutate(OCCUR_DATE = floor_date(OCCUR_DATE, "month"))
+
+month_table_NYC<-as.data.frame(table(newestshooting_data_NYC$OCCUR_DATE))
+
+month_table_NYC$Var1<-ymd(month_table_NYC$Var1)
+
+myplot_NYC<-ggplot(month_table_NYC, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("NYC Shooting Frequencies by Month")
+myplot_NYC + geom_smooth(method="lm")
+
+#plot for manhattan
+data_manhattan<-newestshooting_data_NYC %>% filter(BORO=="MANHATTAN")
+month_table_MAN<-as.data.frame(table(data_manhattan$OCCUR_DATE))
+month_table_MAN$Var1<-ymd(month_table_MAN$Var1)
+myplot_MAN<-ggplot(month_table_MAN, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Manhattan Shooting Frequencies by Month")
+myplot_MAN + geom_smooth(method="lm")
+
+summary(month_table_MAN$Freq)
+
+#plot for bronx
+data_bronx<-newestshooting_data_NYC %>% filter(BORO=="BRONX")
+month_table_BRONX<-as.data.frame(table(data_bronx$OCCUR_DATE))
+month_table_BRONX$Var1<-ymd(month_table_BRONX$Var1)
+myplot_BRONX<-ggplot(month_table_BRONX, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Bronx Shooting Frequencies by Month")
+myplot_BRONX + geom_smooth(method="lm")
+
+summary(month_table_BRONX$Freq)
+
+#plot for queens
+data_QUEENS<-newestshooting_data_NYC %>% filter(BORO=="QUEENS")
+month_table_QUEENS<-as.data.frame(table(data_QUEENS$OCCUR_DATE))
+month_table_QUEENS$Var1<-ymd(month_table_QUEENS$Var1)
+myplot_QUEENS<-ggplot(month_table_QUEENS, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Queens Shooting Frequencies by Month")
+myplot_QUEENS + geom_smooth(method="lm")
+
+summary(month_table_QUEENS$Freq)
+
+#plot for brooklyn
+data_BROOK<-newestshooting_data_NYC %>% filter(BORO=="BROOKLYN")
+month_table_BROOK<-as.data.frame(table(data_BROOK$OCCUR_DATE))
+month_table_BROOK$Var1<-ymd(month_table_BROOK$Var1)
+myplot_BROOK<-ggplot(month_table_BROOK, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Brooklyn Shooting Frequencies by Month")
+myplot_BROOK + geom_smooth(method="lm")
+
+summary(month_table_BROOK$Freq)
+
+#plot for staten island
+data_STAT<-newestshooting_data_NYC %>% filter(BORO=="STATEN ISLAND")
+month_table_STAT<-as.data.frame(table(data_STAT$OCCUR_DATE))
+month_table_STAT$Var1<-ymd(month_table_STAT$Var1)
+myplot_STAT<-ggplot(month_table_STAT, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Staten Island Shooting Frequencies by Month")
+myplot_STAT + geom_smooth(method="lm")
+
+summary(month_table_STAT$Freq)
+
+```
+#### Standard Deviation around the Regression for each Borough
+
+
+Manhattan: 8.4
+
+Bronx: 17.1
+
+Queens: 9.1
+
+Brooklyn: 25.4
+
+Staten Island: 2.6
+
+##### New York City:
+
+From the regression line it can be seen that shootings for New York City generally, gradually decreased over time from the period of 2006 to 2021. However, it is worth noting that near the end of the plot, during the year 2021, points indicating shooting totals per month trended higher and also made up the highest values from the data set. 
+
+##### Manhattan:
+Concerning Manhattan, it can also be seen that the number of shootings gradually trended downwards over time. Similarly the number of shootings spiked and reached its maximum values during the year 2021. Standard deviation was calculated to be 8.4 for the data. 
+
+##### Bronx:
+
+In the Bronx, shootings also decreased gradually over time on average as evident by the regression line. Similarly there was a large spike in shootings during 2021. Standard deviation was calculated to be 17.1 for the data.
+
+##### Queens:
+
+In Queens, the regression line also indicates that on average shootings decreased over time. Similarly as in the previous Boroughs, Queens also experienced a large uptick in shootings during the year 2021. Standard deviation was calculated to be 9.1 for the data. 
+
+##### Brooklyn:
+
+For Brooklyn, it is seen that the shootings decreased over time more significantly than for it did within other Boroughs. The regression line begins at approximately 70 shootings per month on average in 2006 and decreases to approximately 45 in the year 2020. However, as with other boroughs the number of shootings in 2021 spikes. Standard deviation was calculated to be 25.4 for the data.
+
+##### Staten Island:
+
+Staten Island experienced significantly less shootings than other boroughs as evident from earlier analysis. As with the other boroughs, the regression line indicates that shootings decreased gradually over time. Contrary to other boroughs, the number of shootings in Staten Island did not spike as strongly in the year 2021. Standard deviation was calculated to be 2.6 for the data.
+
+
+
+#### General Conclusions and Discussion of Modeling
+
+It can be concluded that in general, for New York City and of the Boroughs, shootings tended to decrease on average between 2006 and 2021. It is also evident that for all Boroughs, except for Staten Island, shooting numbers significantly increased during the year 2021. 
+
+From the calculated standard deviations, it can be seen that Brooklyn had the most spread around its regression line. Staten Island had the least spread around its regression line, but also had the smallest shooting totals for each month. 
+
+The regression line was used to visualize the shootings over time on average. The grey shading surrounding the line, represents the 95% confidence interval for the data set. In general, the regression line does model the general trends of the number of shootings over time. However, many of the data points are far from it and fall outside of the 95% confidence interval so it cannot accurately predict values to a high degree of certainty when analyzing the number of shootings per month for this data set. 
+
+
+It is also evident that there may be bias in the data analysis. Different boroughs of New York city may have significantly larger populations which may have led them to therefore experience much larger numbers of shootings. Furthermore, race and age may have played a factor in the number of shootings that occurred in each borough. If groups more involved in shootings were more isolated to certain boroughs, this may have also introduced bias to the data.
+
+
+
+
+
+
+
+
+
+#### The code utilized to perform this analysis has been listed for reproducibility.
+
+```{r echo=TRUE, results='hide', message=FALSE, warning=FALSE, fig.show='hide'}
+myurl<-"https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD"
+library(tidyverse)
+
+shooting_data<-read.csv(myurl)
+
+total_number_shootings_NYC<- length(shooting_data$OCCUR_DATE)
+
+#find total number of shootings per boro in the time span
+table(newshooting_data$BORO)
+
+#calculate percentages of shootings occurring in each Borough
+fraction_of_shooting_in_BRONX<-7402/length(shooting_data$OCCUR_DATE)
+fraction_of_shooting_in_BRONX
+fraction_of_shooting_in_Brooklyn<-10365/length(shooting_data$OCCUR_DATE)
+fraction_of_shooting_in_Brooklyn
+fraction_of_shooting_in_Manhattan<-3265/length(shooting_data$OCCUR_DATE)
+fraction_of_shooting_in_Manhattan
+fraction_of_shooting_in_Queens<-3828/length(shooting_data$OCCUR_DATE)
+fraction_of_shooting_in_Queens
+fraction_of_shooting_in_StatenIsland<-736/length(shooting_data$OCCUR_DATE)
+fraction_of_shooting_in_StatenIsland
+
+#remove unnecessary cols
+shooting_data<- shooting_data %>% select(-c(X_COORD_CD,Y_COORD_CD,Latitude,Longitude,Lon_Lat,INCIDENT_KEY))
+
+#load lubridate and convert character strings in OCCUR_DATE into date object
+
+library(lubridate)
+newshooting_data<- shooting_data %>% mutate(OCCUR_DATE=mdy(OCCUR_DATE)) 
+
+#floor date round all of the dates into year to make less data points
+newestshooting_data_NYC<-newshooting_data %>% mutate(OCCUR_DATE = floor_date(OCCUR_DATE, "month"))
+
+
+#convert the occur date data into frequency data using the table function and  also set it as a data 
+#frame so that it can be plotted
+month_table_NYC<-as.data.frame(table(newestshooting_data_NYC$OCCUR_DATE))
+
+#convert var1 integers into date/double type
+month_table_NYC$Var1<-ymd(month_table_NYC$Var1)
+
+#use ggplot to plot by frequencies and have x axis labels be vertical, add title, and add best fit line
+myplot_NYC<-ggplot(month_table_NYC, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("NYC Shooting Frequencies by Month")
+myplot_NYC + geom_smooth(method="lm")
+
+#find all boros
+unique(shooting_data$BORO)
+
+#plot for manhattan
+data_manhattan<-newestshooting_data_NYC %>% filter(BORO=="MANHATTAN")
+month_table_MAN<-as.data.frame(table(data_manhattan$OCCUR_DATE))
+month_table_MAN$Var1<-ymd(month_table_MAN$Var1)
+myplot_MAN<-ggplot(month_table_MAN, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Manhattan Shooting Frequencies by Month")
+myplot_MAN + geom_smooth(method="lm")
+
+summary(month_table_MAN$Freq)
+sd(month_table_MAN$Freq)
+
+#plot for bronx
+data_bronx<-newestshooting_data_NYC %>% filter(BORO=="BRONX")
+month_table_BRONX<-as.data.frame(table(data_bronx$OCCUR_DATE))
+month_table_BRONX$Var1<-ymd(month_table_BRONX$Var1)
+myplot_BRONX<-ggplot(month_table_BRONX, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Bronx Shooting Frequencies by Month")
+myplot_BRONX + geom_smooth(method="lm")
+
+summary(month_table_BRONX$Freq)
+sd(month_table_BRONX$Freq)
+
+#plot for queens
+data_QUEENS<-newestshooting_data_NYC %>% filter(BORO=="QUEENS")
+month_table_QUEENS<-as.data.frame(table(data_QUEENS$OCCUR_DATE))
+month_table_QUEENS$Var1<-ymd(month_table_QUEENS$Var1)
+myplot_QUEENS<-ggplot(month_table_QUEENS, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Queens Shooting Frequencies by Month")
+myplot_QUEENS + geom_smooth(method="lm")
+
+summary(month_table_QUEENS$Freq)
+sd(month_table_QUEENS$Freq)
+
+#plot for brooklyn
+data_BROOK<-newestshooting_data_NYC %>% filter(BORO=="BROOKLYN")
+month_table_BROOK<-as.data.frame(table(data_BROOK$OCCUR_DATE))
+month_table_BROOK$Var1<-ymd(month_table_BROOK$Var1)
+myplot_BROOK<-ggplot(month_table_BROOK, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Brooklyn Shooting Frequencies by Month")
+myplot_BROOK + geom_smooth(method="lm")
+
+summary(month_table_BROOK$Freq)
+sd(month_table_BROOK$Freq)
+
+#plot for staten island
+data_STAT<-newestshooting_data_NYC %>% filter(BORO=="STATEN ISLAND")
+month_table_STAT<-as.data.frame(table(data_STAT$OCCUR_DATE))
+month_table_STAT$Var1<-ymd(month_table_STAT$Var1)
+myplot_STAT<-ggplot(month_table_STAT, aes(x=Var1, y=Freq))+geom_point()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ggtitle("Staten Island Shooting Frequencies by Month")
+myplot_STAT + geom_smooth(method="lm")
+
+
+summary(month_table_STAT$Freq)
+sd(month_table_STAT$Freq)
+
+```
+
+
